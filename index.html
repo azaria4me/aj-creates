@@ -16,7 +16,118 @@
     .droppable, select, button { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
     button.save { background: #d63384; color: #fff; font-weight: bold; }
     #outputAvatar { margin-top: 30px; max-width: 400px; margin-left: auto; margin-right: auto; text-align: center; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+    .draggable { background: #f8d7fa; padding: 6px 10px; margin: 5px 0; border-radius: 4px; cursor: move; user-select: none; }
+    .dropzone { border: 2px dashed #ccc; padding: 10px; min-height: 40px; margin-top: 6px; border-radius: 6px; background: #fff; }
   </style>
 </head>
 <body>
-  <h1>✨ A&J CRE
+  <h1>✨ A&J CREATES ✨</h1>
+  <div id="avatarContainer"></div>
+  <div id="customizer">
+    <h2>Customize Avatar <span id="avatarIndex"></span></h2>
+    <div class="option-group"><label>Drag Options into Boxes</label></div>
+    <div class="option-group">
+      <div class="draggable" draggable="true" data-type="gender">boy</div>
+      <div class="draggable" draggable="true" data-type="gender">girl</div>
+      <div class="draggable" draggable="true" data-type="hair">short</div>
+      <div class="draggable" draggable="true" data-type="hair">long</div>
+      <div class="draggable" draggable="true" data-type="hair">spiky</div>
+      <div class="draggable" draggable="true" data-type="eyes">blue</div>
+      <div class="draggable" draggable="true" data-type="eyes">green</div>
+      <div class="draggable" draggable="true" data-type="eyes">brown</div>
+      <div class="draggable" draggable="true" data-type="skin">light</div>
+      <div class="draggable" draggable="true" data-type="skin">medium</div>
+      <div class="draggable" draggable="true" data-type="skin">dark</div>
+      <div class="draggable" draggable="true" data-type="clothes">casual</div>
+      <div class="draggable" draggable="true" data-type="clothes">formal</div>
+      <div class="draggable" draggable="true" data-type="clothes">ninja</div>
+      <div class="draggable" draggable="true" data-type="accessory">none</div>
+      <div class="draggable" draggable="true" data-type="accessory">glasses</div>
+      <div class="draggable" draggable="true" data-type="accessory">hat</div>
+      <div class="draggable" draggable="true" data-type="accessory">earrings</div>
+    </div>
+    <div class="option-group">
+      <label>Gender</label><div class="dropzone" id="drop-gender"></div>
+      <label>Hair</label><div class="dropzone" id="drop-hair"></div>
+      <label>Eyes</label><div class="dropzone" id="drop-eyes"></div>
+      <label>Skin</label><div class="dropzone" id="drop-skin"></div>
+      <label>Clothes</label><div class="dropzone" id="drop-clothes"></div>
+      <label>Accessory</label><div class="dropzone" id="drop-accessory"></div>
+    </div>
+    <button class="save" onclick="saveAvatar()">Save</button>
+    <button onclick="cancelEdit()">Cancel</button>
+  </div>
+  <div id="outputAvatar">
+    <h2>Selected Avatar Preview</h2>
+    <p id="preview">No avatar selected</p>
+  </div>  <script>
+    const MAX = 20;
+    const avatars = JSON.parse(localStorage.getItem('avatars') || '{}');
+    const container = document.getElementById('avatarContainer');
+    const preview = document.getElementById('preview');
+    let currentIndex = null;
+
+    function init() {
+      container.innerHTML = '';
+      for (let i = 0; i < MAX; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'avatar-slot';
+        slot.innerText = avatars[i] ? format(avatars[i]) : `Slot ${i + 1}`;
+        slot.addEventListener('click', () => openCustomizer(i));
+        container.append(slot);
+      }
+    }
+
+    function format(a) {
+      return `${a.gender}, ${a.hair} hair, ${a.eyes} eyes, ${a.skin} skin, ${a.clothes}, ${a.accessory}`;
+    }
+
+    function openCustomizer(i) {
+      currentIndex = i;
+      const a = avatars[i] || { gender: 'girl', hair: 'short', eyes: 'blue', skin: 'light', clothes: 'casual', accessory: 'none' };
+      document.getElementById('avatarIndex').textContent = `#${i + 1}`;
+      ['gender', 'hair', 'eyes', 'skin', 'clothes', 'accessory'].forEach(type => {
+        document.getElementById(`drop-${type}`).innerText = a[type];
+      });
+      document.getElementById('customizer').style.display = 'block';
+    }
+
+    function saveAvatar() {
+      const avatar = {};
+      ['gender', 'hair', 'eyes', 'skin', 'clothes', 'accessory'].forEach(type => {
+        avatar[type] = document.getElementById(`drop-${type}`).innerText || 'none';
+      });
+      avatars[currentIndex] = avatar;
+      localStorage.setItem('avatars', JSON.stringify(avatars));
+      preview.innerText = format(avatar);
+      document.getElementById('customizer').style.display = 'none';
+      init();
+    }
+
+    function cancelEdit() {
+      document.getElementById('customizer').style.display = 'none';
+    }
+
+    // Drag and Drop functionality
+    document.addEventListener('dragstart', function (e) {
+      if (e.target.classList.contains('draggable')) {
+        e.dataTransfer.setData('text/plain', e.target.innerText);
+        e.dataTransfer.setData('type', e.target.getAttribute('data-type'));
+      }
+    });
+
+    document.querySelectorAll('.dropzone').forEach(zone => {
+      zone.addEventListener('dragover', e => e.preventDefault());
+      zone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        const value = e.dataTransfer.getData('text/plain');
+        if (this.id === `drop-${type}`) {
+          this.innerText = value;
+        }
+      });
+    });
+
+    window.onload = init;
+  </script></body>
+</html>
